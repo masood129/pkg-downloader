@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline Linux Package Downloader | دانلود پکیج‌های لینوکس</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body data-theme="dark" dir="rtl">
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-area">
+        <div class="logo-icon">📦</div>
+        <div class="logo-text">
+          <h1 data-i18n="app_title">دانلود پکیج‌های لینوکس (با وابستگی‌های کامل)</h1>
+          <p data-i18n="app_subtitle">دانلود تمام وابستگی‌های تو در تو برای نصب کاملاً آفلاین در قالب ZIP</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="langToggle" class="btn-icon" title="Change Language">
+          🌐 <span id="langText">English</span>
+        </button>
+        <button id="themeToggle" class="btn-icon" title="Toggle Theme">
+          🌙 <span id="themeText">تم</span>
+        </button>
+        <button id="openFolderBtn" class="btn-icon" title="Open Output Folder">
+          📂 <span data-i18n="open_folder">پوشه خروجی</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      
+      <!-- Left Column: Settings Form -->
+      <div class="form-column">
+        
+        <!-- Card 1: Target System -->
+        <div class="card">
+          <div class="card-title">
+            <span>🐧 <span data-i18n="section_system">سیستم عامل و توزیع هدف</span></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="distroSelect" data-i18n="lbl_distro">توزیع لینوکس</label>
+              <select id="distroSelect">
+                <option value="ubuntu">Ubuntu (اوبونتو)</option>
+                <option value="debian">Debian (دبیان)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="releaseSelect" data-i18n="lbl_release">نسخه توزیع</label>
+              <select id="releaseSelect">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="archSelect" data-i18n="lbl_arch">معماری پردازنده</label>
+              <select id="archSelect">
+                <option value="amd64">amd64 (64-bit Intel / AMD)</option>
+                <option value="arm64">arm64 (64-bit ARM / Apple Silicon)</option>
+                <option value="armhf">armhf (32-bit ARM)</option>
+                <option value="i386">i386 (32-bit Intel / AMD)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="formatSelect" data-i18n="lbl_format">فرمت فایل خروجی</label>
+              <select id="formatSelect">
+                <option value="zip">فایل فشرده ZIP (.zip)</option>
+                <option value="tar.gz">آرشیو TAR GZ (.tar.gz)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Package Info -->
+        <div class="card">
+          <div class="card-title">
+            <span>📦 <span data-i18n="section_package">مشخصات پکیج</span></span>
+          </div>
+
+          <div class="form-group">
+            <label for="pkgInput" data-i18n="lbl_pkg_name">نام پکیج مورد نظر</label>
+            <div class="input-with-btn">
+              <input type="text" id="pkgInput" placeholder="مثال: nginx, curl, docker.io, tree" autofocus>
+              <button id="checkVersionBtn" class="btn btn-secondary" title="بررسی نسخه‌های موجود در مخازن">
+                🔍 <span data-i18n="btn_check_ver">بررسی نسخه‌ها</span>
+              </button>
+            </div>
+            <p class="help-text" data-i18n="help_pkg_name">نام پکیجی که می‌خواهید با تمام نیازمندی‌هایش دانلود شود.</p>
+          </div>
+
+          <div class="form-group" id="versionGroup">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label for="versionSelect" data-i18n="lbl_pkg_version" style="margin-bottom: 0;">نسخه پکیج (انتخاب نسخه)</label>
+              <span id="versionBadge" style="display: none; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;"></span>
+            </div>
+            <select id="versionSelect">
+              <option value="" data-i18n="opt_latest_ver">آخرین نسخه موجود (پیش‌فرض)</option>
+            </select>
+            <p id="versionHint" class="help-text" style="display: none; color: #38bdf8; font-weight: 500; margin-top: 4px;"></p>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_dep_options">گزینه‌های دانلود وابستگی</label>
+            <div class="checkbox-grid">
+              <label class="checkbox-label" id="lblRecommends">
+                <input type="checkbox" id="chkRecommends">
+                <span data-i18n="chk_recommends">شامل Recommends</span>
+              </label>
+              <label class="checkbox-label" id="lblSuggests">
+                <input type="checkbox" id="chkSuggests">
+                <span data-i18n="chk_suggests">شامل Suggests</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Repositories & Mirrors -->
+        <div class="card">
+          <div class="card-title">
+            <span>🌐 <span data-i18n="section_repos">مخازن و میرورها (Repositories)</span></span>
+          </div>
+
+          <div class="form-group">
+            <label for="mirrorSelect" data-i18n="lbl_mirror">انتخاب سرور دانلود (Mirror)</label>
+            <select id="mirrorSelect">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div class="form-group" id="customMirrorGroup" style="display: none;">
+            <label for="customMirrorInput" data-i18n="lbl_custom_mirror">آدرس میرور دلخواه</label>
+            <input type="text" id="customMirrorInput" placeholder="http://my-mirror.example.com/ubuntu/">
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="lbl_components">شاخه‌ها و بخش‌های مخزن (Components)</label>
+            <div class="checkbox-grid" id="componentsGrid">
+              <!-- Dynamically generated based on distro -->
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="extraRepoInput" data-i18n="lbl_extra_repo">مخزن یا PPA اضافی (اختیاری)</label>
+            <input type="text" id="extraRepoInput" placeholder="مثال: deb http://ppa.launchpad.net/... یا ppa:git-core/ppa">
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="btn-group">
+          <button id="startDownloadBtn" class="btn btn-primary btn-block">
+            ⚡ <span data-i18n="btn_start_download">شروع دانلود و ساخت بسته آفلاین</span>
+          </button>
+          <button id="cancelBtn" class="btn btn-danger" style="display: none;">
+            ✖ <span data-i18n="btn_cancel">لغو</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Live Terminal & History -->
+      <div class="terminal-column">
+        
+        <!-- Live Terminal Console -->
+        <div class="terminal-wrapper">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="dot dot-red"></div>
+              <div class="dot dot-yellow"></div>
+              <div class="dot dot-green"></div>
+            </div>
+            <div class="terminal-status">
+              <div class="status-indicator" id="statusIndicator"></div>
+              <span id="statusText" data-i18n="status_idle">آماده به کار</span>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminalBody">
+            <div class="log-line log-info">✨ خوش آمدید! پکیج مورد نظر خود را وارد کرده و دکمه دانلود را بزنید.</div>
+            <div class="log-line" style="color: #64748b;">کنسول زنده لاگ‌ها در این بخش نمایش داده خواهد شد...</div>
+          </div>
+        </div>
+
+        <!-- Result Banner -->
+        <div id="resultCard" class="card" style="margin-top: 20px; display: none;">
+          <div class="card-title">
+            <span>🎉 <span data-i18n="title_success">بسته آفلاین آماده است!</span></span>
+          </div>
+          <p id="resultDetails" style="margin-bottom: 16px; font-size: 0.95rem;"></p>
+          <div class="btn-group">
+            <a id="downloadResultBtn" href="#" class="btn btn-primary" download>
+              ⬇️ <span data-i18n="btn_save_file">دانلود فایل ZIP</span>
+            </a>
+            <button id="showInFolderBtn" class="btn btn-secondary">
+              📂 <span data-i18n="btn_show_folder">مشاهده در پوشه</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Downloaded Packages List -->
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-title">
+            <span>📁 <span data-i18n="section_files">بسته‌های دانلود شده</span></span>
+            <button id="refreshFilesBtn" class="btn-icon btn-sm" style="margin-right: auto;" title="بروزرسانی لیست">
+              🔄
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="th_file">نام فایل</th>
+                  <th data-i18n="th_size">حجم</th>
+                  <th data-i18n="th_date">تاریخ</th>
+                  <th data-i18n="th_actions">عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="filesTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
